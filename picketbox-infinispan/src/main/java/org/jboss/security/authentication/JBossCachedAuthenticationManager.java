@@ -73,6 +73,8 @@ public class JBossCachedAuthenticationManager implements AuthenticationManager, 
 
    protected ConcurrentMap<Principal, DomainInfo> domainCache;
 
+   protected ThreadLocal<CompoundInfo> validatedDomainInfo = new ThreadLocal<CompoundInfo>();
+
    private boolean deepCopySubjectOption = false;
 
    /**
@@ -143,10 +145,16 @@ public class JBossCachedAuthenticationManager implements AuthenticationManager, 
       {
          isValid = validateCache(cachedEntry, credential, activeSubject);
       }
-
+      if (!isValid)
+      {
+         CompoundInfo threadDomainInfo = validatedDomainInfo.get();
+         if (threadDomainInfo != null && threadDomainInfo.getPrincipal().equals(principal))
+         {
+             isValid = validateCache(threadDomainInfo.getDomainInfo(), credential, activeSubject);
+         }
+      }
       if (!isValid)
          isValid = authenticate(principal, credential, activeSubject);
-
       PicketBoxLogger.LOGGER.traceEndIsValid(isValid);
       return isValid;
    }
@@ -484,6 +492,7 @@ public class JBossCachedAuthenticationManager implements AuthenticationManager, 
       // If the user already exists another login is active. Currently
       // only one is allowed so remove the old and insert the new
       domainCache.put(principal != null ? principal : new org.jboss.security.SimplePrincipal("null"), info);
+      validatedDomainInfo.set(new CompoundInfo(principal != null ? principal : new org.jboss.security.SimplePrincipal("null"), info));
       PicketBoxLogger.LOGGER.traceInsertedCacheInfo(info.toString());
       return info.subject;
    }
@@ -534,6 +543,31 @@ public class JBossCachedAuthenticationManager implements AuthenticationManager, 
                PicketBoxLogger.LOGGER.traceCacheEntryLogoutFailure(e);
             }
          }
+      }
+   }
+
+   public static class CompoundInfo implements Serializable
+   {
+      private static final long serialVersionUID = 6166340683654430183L;
+
+      private final Principal principal;
+
+      private final DomainInfo domainInfo;
+
+      public CompoundInfo(Principal principal, DomainInfo domainInfo)
+      {
+         this.principal = principal;
+         this.domainInfo = domainInfo;
+      }
+
+      public Principal getPrincipal()
+      {
+         return principal;
+      }
+
+      public DomainInfo getDomainInfo()
+      {
+         return domainInfo;
       }
    }
 }
