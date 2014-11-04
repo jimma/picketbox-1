@@ -22,22 +22,34 @@
 package org.jboss.security.test.authentication;
 
 import junit.framework.TestCase;
+
 import org.infinispan.Cache;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.jboss.crypto.digest.DigestCallback;
 import org.jboss.security.AuthenticationManager;
+import org.jboss.security.Base64Utils;
 import org.jboss.security.CacheableManager;
 import org.jboss.security.SimplePrincipal;
 import org.jboss.security.auth.callback.AppCallbackHandler;
+import org.jboss.security.auth.callback.MapCallback;
 import org.jboss.security.authentication.JBossCachedAuthenticationManager;
 import org.jboss.security.authentication.JBossCachedAuthenticationManager.DomainInfo;
 
+import javax.security.auth.callback.Callback;
+import javax.security.auth.callback.CallbackHandler;
+import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.AppConfigurationEntry.LoginModuleControlFlag;
 import javax.security.auth.login.Configuration;
+
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.security.MessageDigest;
 import java.security.Principal;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  *  Unit tests for the JBossCachedAuthenticationManager.
@@ -228,4 +240,7 @@ public class JBossCachedAuthenticationManagerUnitTestCase extends TestCase
       {
       }
    }
+   
+  
+ 
 }

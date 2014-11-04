@@ -73,8 +73,6 @@ public class JBossCachedAuthenticationManager implements AuthenticationManager, 
 
    protected ConcurrentMap<Principal, DomainInfo> domainCache;
 
-   protected ThreadLocal<CompoundInfo> validatedDomainInfo = new ThreadLocal<CompoundInfo>();
-
    private boolean deepCopySubjectOption = false;
 
    /**
@@ -145,15 +143,7 @@ public class JBossCachedAuthenticationManager implements AuthenticationManager, 
       {
          isValid = validateCache(cachedEntry, credential, activeSubject);
       }
-      if (!isValid)
-      {
-         CompoundInfo threadDomainInfo = validatedDomainInfo.get();
-         if (threadDomainInfo != null && threadDomainInfo.getPrincipal().equals(principal))
-         {
-             isValid = validateCache(threadDomainInfo.getDomainInfo(), credential, activeSubject);
-         }
-      }
-      if (!isValid)
+      if (!isValid && cachedEntry == null)
          isValid = authenticate(principal, credential, activeSubject);
       PicketBoxLogger.LOGGER.traceEndIsValid(isValid);
       return isValid;
@@ -492,7 +482,6 @@ public class JBossCachedAuthenticationManager implements AuthenticationManager, 
       // If the user already exists another login is active. Currently
       // only one is allowed so remove the old and insert the new
       domainCache.put(principal != null ? principal : new org.jboss.security.SimplePrincipal("null"), info);
-      validatedDomainInfo.set(new CompoundInfo(principal != null ? principal : new org.jboss.security.SimplePrincipal("null"), info));
       PicketBoxLogger.LOGGER.traceInsertedCacheInfo(info.toString());
       return info.subject;
    }
